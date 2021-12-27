@@ -4,11 +4,11 @@
 #  instances of the servo class and the functions needed
 #  to move the robots head in whatever direction is needed
 #
-<<<<<<< HEAD
 import signal
 import sys
 import logging
 from time import sleep
+from gopigo3 import FirmwareVersionError
 from easygopigo3 import EasyGoPiGo3
 from Global_Constants import *
 
@@ -17,12 +17,8 @@ global vcenter
 global hposition
 global hcenter
 
-#vcenter = vposition = 93  # tilt charlie's head up slightly
-#hcenter = hposition = 93
-=======
-from gopigo3 import FirmwareVersionError
-from easygopigo3 import EasyGoPiGo3
->>>>>>> f98e9a35934a914b70fd9dfa592f8f9f6b9be161
+vcenter = vposition = 93  # tilt charlie's head up slightly
+hcenter = hposition = 93
 
 try:
     gopigo3_robot = EasyGoPiGo3()
