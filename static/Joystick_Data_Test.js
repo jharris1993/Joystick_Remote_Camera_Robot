@@ -17,7 +17,7 @@ var gopigo3_joystick = {
     y_axis: 0.00,  // y-axis < 0, joystick pushed forward - y-axis > 0 , joystick pullled back
     head_x_axis: 0.00,  //  head x and y axes mirror the joystick x and y axes
     head_y_axis: 0.00,  //  if the pinky-switch, (head motion enable), is pressed
-    force: 0.00,  //  force is the absolute value of the y-axis deflection
+    force: 0.00,  //  y_force is the absolute value of the y-axis deflection
     trigger_1: 0,   // Partial primary trigger press (motion enabled)
     trigger_2: 0,   // Full primary trigger press  (faster speed - not yet implemented)
     head_enable: 0  // Pinky-switch press  (enable joystick to move head)
@@ -73,7 +73,7 @@ function gamepad_connected() {
     gopigo3_joystick.y_axis = 0.00;
     gopigo3_joystick.head_x_axis = 0.00;
     gopigo3_joystick.head_y_axis = 0.00;
-    gopigo3_joystick.force = 0.00;
+    gopigo3_joystick.y_force = 0.00;
     gopigo3_joystick.trigger_1 = 0;
     gopigo3_joystick.trigger_2 = 0;
     gopigo3_joystick.head_enable = 0;
@@ -91,7 +91,7 @@ function gamepad_disconnected() {
     gopigo3_joystick.y_axis = 0.00;
     gopigo3_joystick.head_x_axis = 0.00;
     gopigo3_joystick.head_y_axis = 0.00;
-    gopigo3_joystick.force = 0.00;
+    gopigo3_joystick.y_force = 0.00;
     gopigo3_joystick.trigger_1 = 0;
     gopigo3_joystick.trigger_2 = 0;
     gopigo3_joystick.head_enable = 0;
@@ -106,7 +106,7 @@ function collate_data(jsdata) {
     gopigo3_joystick.time_stamp = Number.parseFloat(jsdata.timestamp).toFixed();
     gopigo3_joystick.x_axis = Number.parseFloat(jsdata.axes[0]).toFixed(2);
     gopigo3_joystick.y_axis = Number.parseFloat(jsdata.axes[1]).toFixed(2);
-    gopigo3_joystick.force =  Math.abs(Number.parseFloat(jsdata.axes[1]).toFixed(2));
+    gopigo3_joystick.y_force =  Math.abs(Number.parseFloat(jsdata.axes[1]).toFixed(2));
     gopigo3_joystick.trigger_1 = jsdata.buttons[0].value;
     gopigo3_joystick.trigger_2 = jsdata.buttons[14].value;
     gopigo3_joystick.head_enable = jsdata.buttons[5].value;
@@ -121,18 +121,18 @@ function collate_data(jsdata) {
 
 function what_i_am_doing(gopigo3_joystick) {
 
-//  If **EITHER** force = 0 **OR** trigger_1 has been released, the
+//  If **EITHER** y_force = 0 **OR** trigger_1 has been released, the
 //  robot automatically enters the "Stopped" state.
-//  Note that the condition force = 0 compells the robot to stop,
+//  Note that the condition y_force = 0 compells the robot to stop,
 //  no matter what else may be happening.
 
-    if (gopigo3_joystick.force == 0 || gopigo3_joystick.trigger_1 == 0) {
+    if (gopigo3_joystick.y_force == 0 || gopigo3_joystick.trigger_1 == 0) {
         gopigo3_joystick.motion_state = 'Stopped';
         gopigo3_joystick.angle_dir = 'Stopped';
-        gopigo3_joystick.force = 0.00;
+        gopigo3_joystick.y_force = 0.00;
     }  //  end "robot is not moving"
 
-    //  If force is **NOT** zero, **AND** trigger_1 = 1 the robot *must*
+    //  If y_force is **NOT** zero, **AND** trigger_1 = 1 the robot *must*
     //  be moving, therefore the signed magnitude of the Y axis
     //  determines the direction of motion.
     //  If the Y-axis is < 0, the joystick is being pushed forward and
@@ -144,11 +144,11 @@ function what_i_am_doing(gopigo3_joystick) {
     //  Note: we don't worry about the state of trigger_2, (turbo-speed)
     //  here, that's taken care of back at the 'bot.
     //
-    else if (gopigo3_joystick.trigger_1 == 1 && gopigo3_joystick.force > 0) {  // robot is moving
+    else if (gopigo3_joystick.trigger_1 == 1 && gopigo3_joystick.y_force > 0) {  // robot is moving
         gopigo3_joystick.motion_state = 'Moving';
 
     //  At this point we know that the robot is moving,
-    //  (trigger_1 = 1 and force > 0), and we've already grabbed the x
+    //  (trigger_1 = 1 and y_force > 0), and we've already grabbed the x
     //  and y axis values. The next step is to determine the direction
     //  of travel so we can display it.
 
@@ -186,7 +186,7 @@ function what_i_am_doing(gopigo3_joystick) {
 
         else {  //  we should NEVER get here, but. . . . (wink!)
             gopigo3_joystick.motion_state = 'invalid condition\nin what_i_am_doing'
-            gopigo3_joystick.force = 0  //  Force robot to stop.
+            gopigo3_joystick.y_force = 0  //  y_force robot to stop.
         }
     }  // end "robot is moving" motion control logic
 
@@ -240,7 +240,7 @@ function setOnScreen(screen_data) {
     document.getElementById('y_axis').innerHTML = "Y-Axis: " + screen_data.y_axis;
     document.getElementById('head_x_axis').innerHTML = "Head's X-Axis: " + screen_data.head_x_axis;
     document.getElementById('head_y_axis').innerHTML = "Head's Y-Axis: " + screen_data.head_y_axis;
-    document.getElementById('force').innerHTML = "Applied Force: " + screen_data.force;
+    document.getElementById('y_force').innerHTML = "Applied y_force: " + screen_data.y_force;
     document.getElementById('trigger_1').innerHTML = "Trigger 1: " + screen_data.trigger_1;
     document.getElementById('trigger_2').innerHTML = "Trigger 2: " + screen_data.trigger_2;
     document.getElementById('head_enable').innerHTML = "Head Enable: " + screen_data.head_enable;

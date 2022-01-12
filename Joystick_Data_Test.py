@@ -48,11 +48,12 @@ app = Flask(__name__, static_url_path='')
 # is set to vcenter and hcenter respectively, then hposition and vposition
 # are incremented/decremented to move the servos as commanded
 
-force = float(0.00)
-max_speed = float(300.00)
-actual_speed = (max_speed * force)
-vcenter = vposition = int(87)  # tilt charlie's head up slightly
+y_force = float(0.000)
+max_speed = float(300.000)
+actual_speed = (max_speed * y_force)
+vcenter = vposition = int(82)  # tilt charlie's head up slightly
 hcenter = hposition = int(97)
+percent_speed = float(0.000)
 
 # Set the movement step size
 servo_step_size = int(5)
@@ -101,24 +102,24 @@ servo2 = gopigo3_robot.init_servo('SERVO2')
 #
 # These routines calculate the various speed constants we'll
 # need while running the robot as a fraction/percentage of
-# max_speed vs force
+# max_speed vs y_force
 #
 # actual_speed is the fraction of max_speed
-# represented by the joystick force where
-# force = the absolute value of the y-axis reading
-def calc_actual_speed(max_speed, force):
-    actual_speed = max_speed * force
-    print(max_speed, force, actual_speed)
+# represented by the joystick y_force where
+# y_force = the absolute value of the y-axis reading
+def calc_actual_speed(max_speed, y_force):
+    actual_speed = max_speed * y_force
+    print("max speed = ", max_speed, "y_force = ", y_force, "actual speed = ", actual_speed)
     return (actual_speed)
 
 # percent_max_speed represents actual_speed as a percentage of max_speed
-# for example: if max_speed is 500 and force = 0.5,
-# actual_speed is 250, (max_speed * force) and
+# for example: if max_speed is 500 and y_force = 0.5,
+# actual_speed is 250, (max_speed * y_force) and
 # percent_max_speed = 50 (percent of max_speed)
-def calc_percent_speed(max_speed, force):
-    actual_speed = calc_actual_speed(max_speed, force)
-    percent_speed = (actual_speed * 100.00) / max_speed
-    print(max_speed, force, actual_speed, percent_speed)
+def calc_percent_speed(max_speed, actual_speed, y_force):
+#    actual_speed = calc_actual_speed(max_speed, y_force)
+    percent_speed = (actual_speed * 100.000) / max_speed
+    print("max speed = ", max_speed, "y_force = ", y_force, "actual speed = ", actual_speed, "percent speed = ", percent_speed)
     return (percent_speed)
 #    return()
 
@@ -156,6 +157,7 @@ def center_head():
 def shake_head():
     vposition = vcenter
     hpos = hcenter
+    gopigo3_robot.stop()  #  Make sure motion is stopped no matter what
 
     print("Shaking Charlie's Head From Side To Side\n")
     hposition = 110
@@ -243,6 +245,8 @@ def process_robot_commands(args):
     global vposition
     global hposition
     global servo_step_size
+    global actual_speed
+    global percent_speed
 
     controller_status = str(args['controller_status'])
     motion_state = str(args['motion_state'])
@@ -252,13 +256,10 @@ def process_robot_commands(args):
     y_axis = float(args['y_axis'])
     head_x_axis = float(args['head_x_axis'])
     head_y_axis = float(args['head_y_axis'])
-    force = float(args['force'])
+    y_force = float(args['y_force'])
     trigger_1 = int(args['trigger_1'])
     trigger_2 = int(args['trigger_2'])
     head_enable = int(args['head_enable'])
-
-    actual_speed = int(calc_actual_speed(max_speed, force))
-    percent_speed = int(calc_percent_speed(max_speed, force))
 
 ############################
 ##    Motion Selection    ##
@@ -268,11 +269,14 @@ def process_robot_commands(args):
 #  **IF** the robot should be moving,
 #  and **WHAT DIRECTION** it should be moving in.
 #
-    if force == 0 or trigger_1 == 0:
+    if y_force == 0 or trigger_1 == 0:
         gopigo3_robot.stop()
         print("Robot Stopped. . .\n")
 
     elif trigger_1 == 1 and y_axis < 0:
+        actual_speed = int(calc_actual_speed(max_speed, y_force))
+        percent_speed = int(calc_percent_speed(max_speed, actual_speed, y_force))
+
         # We're moving forward - either straight, left, or right.
         print("Moving robot Forward. . .\n ")
         
@@ -476,12 +480,7 @@ if __name__ == "__main__":
         sleep(0.25)
 
     # until some keyboard event is detected
-    logging.info("Keyboard event detected\n")
-
-    # Center Charlie's Head on shutdown
-    shake_head()
-    sleep(0.25)  #  Give head time to get centered.
-    print("Charlie is now ready to stop. . .\n")
+    logging.info("Keyboard event detected!\n")
 
     # begin shutdown procedure
     webserver.shutdown()
@@ -491,6 +490,12 @@ if __name__ == "__main__":
     # and finalize shutting them down
     webserver.join()
     streamserver.join()
-    logging.info("Stopped all threads")
+    logging.info("Stopped all threads. . . .")
+
+    # Center Charlie's Head on shutdown
+    shake_head()
+    sleep(0.25)  #  Give head time to get centered.
+    print("Charlie is now fully stopped. . .\n")
+
 
     sys.exit(0)
