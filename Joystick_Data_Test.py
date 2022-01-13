@@ -116,9 +116,9 @@ def calc_actual_speed(max_speed, y_force):
 # for example: if max_speed is 500 and y_force = 0.5,
 # actual_speed is 250, (max_speed * y_force) and
 # percent_max_speed = 50 (percent of max_speed)
-def calc_percent_speed(max_speed, actual_speed, y_force):
+def calc_percent_speed(x_axis, y_axis):
 #    actual_speed = calc_actual_speed(max_speed, y_force)
-    percent_speed = (actual_speed * 100.000) / max_speed
+    percent_speed = (((y_axis/x_axis)/2)*100)
     print("max speed = ", max_speed, "y_force = ", y_force, "actual speed = ", actual_speed, "percent speed = ", percent_speed)
     return (percent_speed)
 #    return()
