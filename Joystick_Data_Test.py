@@ -381,8 +381,9 @@ def process_robot_commands(args):
         keyboard_trigger.set()        
 
     else:
-        motion_state = 'unknown'
-        print('\nUnknown (ignored) key pressed\n')
+        pass  #  just skip this
+#        motion_state = 'unknown'
+#        print('\nUnknown (ignored) key pressed\n')
     return()
 
 #############################

@@ -10,7 +10,6 @@
 //  This should return data to Joystick_data_test.js
 //
 
-var server_address = window.location.protocol + "//" + window.location.host + "/robot";
 var joystick_data;
 var js = '';
 
@@ -33,15 +32,15 @@ var gopigo3_joystick = {
 window.addEventListener("gamepadconnected", (event) => {
     js = event.gamepad;
     gamepad_connected();  // Gamepad is now connected
-    send_data(gopigo3_joystick)  // send it to the robot
-//    get_more_data();  // continue service loop
+    send_data(gopigo3_joystick)  // send it to the main script
+    get_gamepad_data();  // Star aquiring data
 });
 
 window.addEventListener("gamepaddisconnected", (event) => {
     gopigo3_joystick.controller_status = "Disconnected"; // Joystick disconnected, so set state to "diusconnected"
     gopigo3_joystick.motion_state = 'Waiting for Joystick';
     gamepad_disconnected(); // clear out stale data
-    send_data(gopigo3_joystick)  // send it to the robot
+    send_data(gopigo3_joystick)  // send it to the main script
 //    get_more_data(); // continue service loop
 });
 
@@ -52,6 +51,8 @@ function  get_gamepad_data() {
 
     send_data(gopigo3_joystick);  // Send normalized data to 'bot
 
+    //  function is_something_happening is the "event loop" that spins until the timer changes indicating
+    //  that something actually happened.
     is_something_happening(jsdata, gopigo3_joystick)  // Wait for something else to happen and exit to game loop
 
 //    get_more_data(); // continue service loop  // requestAnimationFrame loop
@@ -114,19 +115,15 @@ function collate_data(jsdata) {
 function is_something_happening(jsdata, gopigo3_joystick) {
     var old_time = gopigo3_joystick.time_stamp
         while (old_time == Number.parseFloat(jsdata.timestamp).toFixed()) {
-            ; // spin on a "no-op"
+            setTimeout(is_something_happening, 125);
 //        requestAnimationFrame(is_something_happening(jsdata, gopigo3_joystick));
         }
-    get_more_data()
-    return;
+        get_gamepad_data()  //  Return for another data frame from the joystick
+    return;  // pro-forma "close" - the code should never reach this point.
 }
 
 function send_data(gpg_data) {
-    var query_string;
-    console.log('gpg_data =', gpg_data);
-    query_string = '?' + $.param(gpg_data);
-    console.log('query_string =', query_string);
-    $.post(server_address + query_string);
+    postMessage(gpg_data);  // Send data back to main script
     return;
 }
 
