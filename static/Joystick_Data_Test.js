@@ -2,10 +2,16 @@
 //  Joystick Data Test
 //  This should return data to index.html
 //
+//  This version has been modified to work with the web worker script
+//  WebWorker.js
+//
 
 var server_address = window.location.protocol + "//" + window.location.host + "/robot";
 var joystick_data;
 var js = '';
+
+//  Instantiate worker object
+var WebWorker = new Worker('WebWorker.js');
 
 //  Formal definition of "gopigo3_joystick"
 var gopigo3_joystick = {
@@ -23,20 +29,20 @@ var gopigo3_joystick = {
     head_enable: 0  // Pinky-switch press  (enable joystick to move head)
 };
 
-window.addEventListener("gamepadconnected", (event) => {
-    js = event.gamepad;
-    gamepad_connected();  // Gamepad is now connected
-    send_data(gopigo3_joystick)  // send it to the robot
-//    get_more_data();  // continue service loop
-});
+// window.addEventListener("gamepadconnected", (event) => {
+//     js = event.gamepad;
+//     gamepad_connected();  // Gamepad is now connected
+//     send_data(gopigo3_joystick)  // send it to the robot
+// //    get_more_data();  // continue service loop
+// });
 
-window.addEventListener("gamepaddisconnected", (event) => {
-    gopigo3_joystick.controller_status = "Disconnected"; // Joystick disconnected, so set state to "diusconnected"
-    gopigo3_joystick.motion_state = 'Waiting for Joystick';
-    gamepad_disconnected(); // clear out stale data
-    send_data(gopigo3_joystick)  // send it to the robot
-//    get_more_data(); // continue service loop
-});
+// window.addEventListener("gamepaddisconnected", (event) => {
+//     gopigo3_joystick.controller_status = "Disconnected"; // Joystick disconnected, so set state to "diusconnected"
+//     gopigo3_joystick.motion_state = 'Waiting for Joystick';
+//     gamepad_disconnected(); // clear out stale data
+//     send_data(gopigo3_joystick)  // send it to the robot
+// //    get_more_data(); // continue service loop
+// });
 
 //  Add section for keyboard listener
 window.addEventListener('keydown', (event) => {
@@ -46,10 +52,17 @@ window.addEventListener('keydown', (event) => {
 //    get_more_data(); // continue service loop
 });
 
-function  get_gamepad_data() {
-    js = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
+WebWorker.onmessage = function(e) {
+    result.textContent = e.data;
+    get_gamepad_data(result.textContent)
+    console.log('Message received from worker');
+}
 
-    collate_data(js[0]);  //  Collect variable data to be sent
+function  get_gamepad_data(gopigo3_joystick) {
+//    js = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
+
+//    collate_data(js[0]);  //  Collect variable data to be sent
+
 
     what_i_am_doing(gopigo3_joystick)  // Collect motion status
 
@@ -58,7 +71,7 @@ function  get_gamepad_data() {
     // Update the on-screen data with the nrmalized data
     setOnScreen(gopigo3_joystick);
 //    requestAnimationFrame(is_something_happening(jsdata, gopigo3_joystick));
-    get_more_data(); // continue service loop  // requestAnimationFrame loop
+//    get_more_data(); // continue service loop  // requestAnimationFrame loop
     return;
 }
 
@@ -102,17 +115,17 @@ function gamepad_disconnected() {
 
 //  Collate data collects all the data, normalizes it, packages it,
 //  and prepares it for transmission to the 'bot'
-function collate_data(jsdata) {
-    // Number.parseFloat() th
-    gopigo3_joystick.time_stamp = Number((jsdata.timestamp).toFixed(0));    ;
-    gopigo3_joystick.x_axis = Number.parseFloat((jsdata.axes[0]).toFixed(3));
-    gopigo3_joystick.y_axis = Number.parseFloat(jsdata.axes[1]).toFixed(3);
-    gopigo3_joystick.force =  Math.abs(Number.parseFloat((jsdata.axes[1]).toFixed(3)));
-    gopigo3_joystick.trigger_1 = jsdata.buttons[0].value;
-    gopigo3_joystick.trigger_2 = jsdata.buttons[14].value;
-    gopigo3_joystick.head_enable = jsdata.buttons[5].value;
-    return (gopigo3_joystick)
-}
+// function collate_data(jsdata) {
+//     // Number.parseFloat() th
+//     gopigo3_joystick.time_stamp = Number((jsdata.timestamp).toFixed(0));    ;
+//     gopigo3_joystick.x_axis = Number.parseFloat((jsdata.axes[0]).toFixed(3));
+//     gopigo3_joystick.y_axis = Number.parseFloat(jsdata.axes[1]).toFixed(3);
+//     gopigo3_joystick.force =  Math.abs(Number.parseFloat((jsdata.axes[1]).toFixed(3)));
+//     gopigo3_joystick.trigger_1 = jsdata.buttons[0].value;
+//     gopigo3_joystick.trigger_2 = jsdata.buttons[14].value;
+//     gopigo3_joystick.head_enable = jsdata.buttons[5].value;
+//     return (gopigo3_joystick)
+// }
 
 //  Function "what_i_am_doing" takes the condition of the triggers and
 //  the position of the controller and determines what the robot is,
