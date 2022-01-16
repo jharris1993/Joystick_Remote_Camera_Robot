@@ -1,4 +1,5 @@
 # New Remote Camera Robot WebWorker Branch
+## NOTE: This branch has been temporarily abandoned since web worker threads cannot interact directly with the gamepad/joystick.
 
 This project is a modification of the original [Remote Camera Robot](https://https://github.com/DexterInd/GoPiGo3/tree/master/Projects/RemoteCameraRobot) project as developed by Dexter Industries for my GoPiGo-3 robot.
 
