@@ -14,9 +14,11 @@ import signal
 import sys
 import logging
 from time import sleep
+import Move_Head
 
 #  This grabs my modified version of EasyGoPiGo3 instead of the standard package
 sys.path.insert(0, '/home/pi/Project_Files/Projects/GoPiGo3/Software/Python')
+
 
 from werkzeug.datastructures import ResponseCacheControl
 
@@ -36,6 +38,7 @@ import socketserver
 from threading import Condition, Thread, Event
 from http import server
 
+
 logging.basicConfig(level = logging.WARNING)
 
 #  Server Global Constants
@@ -47,8 +50,6 @@ app = Flask(__name__, static_url_path='')
 ##############################
 ### Basic Global Variables ###
 ##############################
-
-
 
 #  The main robot_data structure to hold all the necessary information that can be passed back and forth
 #  to the various functions and methods.
@@ -72,14 +73,11 @@ robot = {
     "desired_speed": 0,  #  This is the adjusted speed based on joystick force.
     "differential_speed": 0,  #  This is the fractional part of the desired speed used for making turns.
     "vcenter": 92,  #  The "calibrated" positions for Charlie's head 
-    "hcenter": 88,  #  to be centered in both axes.
+    "hcenter": 85,  #  to be centered in both axes.
     "vposition": 92,  #  The current angular setting for the vertical angle servo
     "hposition": 88,  #  The current angular setting for the horizontal angle servo
     "reverse_speed_offset": 0.50
     }
-
-# Set the movement step size
-servo_step_size = int(5)
 
 # Directory Path can change depending on where you install this file.  Non-standard installations
 # may require you to change this directory.
@@ -131,52 +129,8 @@ my_gopigo3.right_eye_color = (0, 80, 80)
 #  If you try to set a speed greater than this, it won't go any faster no matter what value you send.
 my_gopigo3.set_speed(robot['turbo_speed'])
 
-#####################################
-##  Global head movement routines  ##
-#####################################
-
-#  Generic "head movement" routine
-#  This is used by all the other head movement
-#  routines to move the head to a specified
-#  vertical and horizontal position
-
-def move_head(hpos, vpos):
-    servo1.rotate_servo(hpos)
-    servo2.rotate_servo(vpos)
-    sleep(0.25)
-    servo1.disable_servo()
-    servo2.disable_servo()
-    return(0)
-
-# Center Charlie's head
-def center_head():
-    move_head(robot['hcenter'], robot['vcenter'])
-
-    #  reset position variables to prevent unintentional head "drift" in subsequent commands.
-    robot['vposition'] = robot['vcenter']
-    robot['hposition'] = robot['hcenter']
-    return(0)
-
-# Shake Charlie's head - just to prove he's alive! ;)
-def shake_head():
-#    print("Shaking Charlie's Head From Side To Side\n")
-    robot['hposition'] = 110
-    move_head(robot['hposition'], robot['vposition'])
-    robot['hposition'] = 84
-    move_head(robot['hposition'], robot['vposition'])
-
-#    print("Centering Charlie's head horizontally\n")
-    center_head()
-
-#    print("Moving Charlie's Head Up And Down\n")
-    robot['vposition'] = 110
-    move_head(robot['hposition'], robot['vposition'])
-    robot['vposition'] = 66
-    move_head(robot['hposition'], robot['vposition'])
-
-#    print("Re-centering Charlie's head vertically\n")
-    center_head()
-    return(0)
+# Set the movement step size
+servo_step_size = int(5)
 
 
 ###################
@@ -262,7 +216,7 @@ def send_static(path):
 #  If the robot is turning, this is the speed of the outside wheel.
 
 def calc_desired_speed(speed, force):
-    desired_speed = int(round_up(speed * force))
+    desired_speed = int(vround(speed * force))
     if desired_speed > speed:
         desired_speed = speed
     return (desired_speed)
@@ -274,10 +228,10 @@ def calc_desired_speed(speed, force):
 #  the slower the inside wheel should turn
 #
 #  calculate_differential_speed calculates the reduced speed value to apply to the inside wheel
-#  using the formula round_up(desired_speed - abs(desired_speed * x_axis))
+#  using the formula vround(desired_speed - abs(desired_speed * x_axis))
 
 def calculate_differential_speed(desired_speed, x_axis):
-    differential_speed = int(round_up(desired_speed - abs(desired_speed * x_axis)))
+    differential_speed = int(vround(desired_speed - abs(desired_speed * x_axis)))
     if differential_speed > desired_speed:
         differential_speed = desired_speed
     return (differential_speed)
@@ -286,25 +240,18 @@ def calculate_differential_speed(desired_speed, x_axis):
 # positive and negative numbers
 # ref: https://www.pythontutorial.net/advanced-python/python-rounding/
 
-def round_up(x, digits=2):
-
-#  "x" is the value to be rounded using 4/5 rounding rules
-#  always rounding away from zero
+def vround(x, decimal_precision=2):
+#  vround, ("Vanilla" rounding), always uses "standard" 5/4 rounding and always rounds away from zero regardless of sign.
 #
-#  "digits" is the number of decimal digits desired after the decimal divider mark.
-#  (default = 2)
+#  "x" is the value to be rounded using "standard" 4/5 rounding rules
+#  always rounding away from zero regardless of sign
+#
+#  "decimal_precision" is the number of decimal places to round to
+#
+    if decimal_precision < 0:
+        decimal_precision = 0
 
-    if digits < 0:
-        digits = 0
-    elif digits > 15:
-        digits = 15
-
-#  Since the rounding formula expects the number to be of an intger magnitude,
-#  "exp" is the "orders of magnitude" to multiply by to make the number an integer
-
-    exp = 10 ** digits
-
-#  The number to be rounded, increased in magnitude by the "exp" multiplier
+    exp = 10 ** decimal_precision
     x = exp * x
 
     if x > 0:
@@ -314,7 +261,7 @@ def round_up(x, digits=2):
     else:
         val = 0
         
-    if digits <= 0:
+    if decimal_precision <= 0:
         return (int(val))
     else:
         return (val)
@@ -450,37 +397,40 @@ def process_robot_commands(args):
     if robot["motion_state"] == 'ArrowUp':
         print('\nmoving head up\n')
         robot['vposition'] += servo_step_size
-        move_head(robot['hposition'], robot['vposition'])
-#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+        Move_Head.move(robot['hposition'], robot['vposition'])
+        print(f"robot['hposition'] is {robot['hposition']} - robot['vposition'] is {robot['vposition']} -\n")
 
     elif robot["motion_state"] == 'ArrowDown':
         print('\nmoving head down\n')
         robot['vposition'] -= servo_step_size
-        move_head(robot['hposition'], robot['vposition'])
-#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+        Move_Head.move(robot['hposition'], robot['vposition'])
+        print(f"robot['hposition'] is {robot['hposition']} - robot['vposition'] is {robot['vposition']} -\n")
 
     elif robot["motion_state"] == 'ArrowRight':
         print('\nmoving head right\n')
         robot['hposition'] += servo_step_size
         if robot['hposition'] >= 180:
             robot['hposition'] = 180
-        move_head(robot['hposition'], robot['vposition'])
-#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+        Move_Head.move(robot['hposition'], robot['vposition'])
+        print(f"robot['hposition'] is {robot['hposition']} - robot['vposition'] is {robot['vposition']} -\n")
 
     elif robot["motion_state"] == 'ArrowLeft':
         print('\nmoving head left\n')
         robot['hposition'] -= servo_step_size
         if robot['hposition'] <= 0:
             robot['hposition'] = 0
-        move_head(robot['hposition'], robot['vposition'])
-#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+        Move_Head.move(robot['hposition'], robot['vposition'])
+        print(f"robot['hposition'] is {robot['hposition']} - robot['vposition'] is {robot['vposition']} -\n")
 
     elif robot["motion_state"] == 'Home':
         print("\nCentering Head\n")
-        center_head()
-        servo1.disable_servo()
-        servo2.disable_servo()
-#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+        Move_Head.move(robot["hcenter"], robot["vcenter"])
+        #  reset position variables to center too
+        robot["hposition"] = robot["hcenter"]
+        robot["vposition"] = robot["vcenter"]
+        # servo1.disable_servo()
+        # servo2.disable_servo()
+        print(f"robot['hposition'] is {robot['hposition']} - robot['vposition'] is {robot['vposition']} -\n")
 
     elif robot["motion_state"] == 'Escape':
         print('A "shutdown" command was recieved from the browser.\n')
@@ -626,7 +576,7 @@ else:
 
     # Shaking Charlie's head to indicate startup
     print("Charlie is signalling that the startup command has successfully run by shaking his head.\n")
-    shake_head()
+    Move_Head.shake(robot["hcenter"], robot["vcenter"], 20)
     sleep(0.25)  #  Give head time to get centered.
     print("Joystick_Data_Test is now listening for browser connections.\n")
 
@@ -656,7 +606,7 @@ else:
     sleep(0.25)
 
     # Center Charlie's Head on shutdown
-    shake_head()
+    Move_Head.shake(robot["hcenter"], robot["vcenter"], 20)
     sleep(0.25)  #  Give head time to get centered.
     my_gopigo3.stop()  # Just in case. . .
     print("Charlie is signalling that shutdown has successfully completed by shaking his head.\n")
