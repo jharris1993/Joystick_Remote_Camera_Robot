@@ -429,7 +429,8 @@ if __name__ == "__main__":
     logging.info("Keyboard event detected\n")
 
     # Center Charlie's Head on shutdown
-    center_head()
+#    center_head()
+    shake_head()
     sleep(0.25)  #  Give head time to get centered.
     print("Charlie is now ready to stop. . .\n")
 
