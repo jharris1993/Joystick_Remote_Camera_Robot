@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+        <META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+        <link rel="shortcut icon" href="static/favicon.ico">
+        <link rel="stylesheet" href="static/style.css"/>
+        <script src="static/jquery-3.6.0.min.js"></script>
+        <script src="static/throttle.js"></script>
+<<<<<<< HEAD
+        <script src="static/Joystick_Data_Test.js"></script>
+
+        <title>GoPiGo3 Joystick Data Test</title>
+
+    </head>
+    <body>
+
+        <div class="container">
+            <div id="zone_joystick">
+                <script language="JavaScript">
+                document.write('<img id="video_source" src="' + window.location.protocol + '//' + window.location.hostname + ':5001' + '/stream.mjpg' + '"/>' );
+                </script>
+            </div>
+
+            <div class="robot_motion">
+                Robot Motion
+                <ul>
+                <li id="motion_state">Motion State: Waiting</li>
+                <li id="angle_dir">Direction: None</li>
+                <li id="time_stamp">Timestamp: 0</li>
+                <li id="force">Applied Force: 0.00</li>
+                </ul>
+            </div>
+
+            <div class="robot_status">
+                Robot's Status
+                <ul>
+                <li id="battery_voltage">Battery Voltage: 0.00</li>
+                <li id="distance">Forward Distance: 0.00</li>
+                <li id="robot_speed">Robot's Speed: 0.00</li>
+                <li id="bumper">Front Bumper: Normal</li>
+                </ul>
+            </div>
+
+
+        </div>
+
+        <div class="overlay"></div>
+=======
+        <script src="static/New_Remote_Camera_Robot.js"></script>
+        <title>New Remote Camera Robot</title>
+    </head>
+
+    <body>
+        <div class="container">
+            <div id="zone_joystick">
+                <script language="JavaScript">
+                    document.write('<img id="video_source" src="' + window.location.protocol + '//' + window.location.hostname + ':5001' + '/stream.mjpg' + '"/>' );
+                </script>
+            </div>
+
+            <div class="robot">
+                New Remote Camera Robot
+                <ul>
+                    <li id="motion_state">Robot's Motion State: Waiting for Joystick</li>
+                    <li id="angle_dir">Robot's Direction: None</li>
+                    <li id="time_stamp">Timestamp: 0</li>
+                    <li id="force">Applied Force: 0.00</li>
+                </ul>
+            </div>
+        </div>
+>>>>>>> 904ae4df49ad7f5d12b652d41c7d368f182fa7de
+    </body>
+</html>
